@@ -1,0 +1,26 @@
+name: Headway REAL 17375873 RobotTrading
+on:
+  workflow_dispatch:
+jobs:
+  trade:
+    runs-on: windows-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install MT5
+        shell: powershell
+        run: |
+          pip install MetaTrader5==5.0.6180 numpy --quiet
+          Invoke-WebRequest -Uri "https://download.mql5.com/cdn/web/metaquotes.software.corp/mt5/mt5setup.exe" -OutFile mt5setup.exe -UseBasicParsing
+          Start-Process -FilePath .\mt5setup.exe -ArgumentList "/auto" -Wait
+          Start-Sleep -Seconds 30
+          # START TERMINAL - this fixes No IPC error
+          Start-Process -FilePath "C:\Program Files\MetaTrader 5\terminal64.exe"
+          Start-Sleep -Seconds 20
+      - name: Run Robot
+        env:
+          MT5_PASSWORD: ${{ secrets.MT5_PASSWORD }}
+        run: python bot.py
